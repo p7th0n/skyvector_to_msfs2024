@@ -1,47 +1,45 @@
 # Feedback Notes
 
-## Airport waypoints
+1. The XML declaration is invalid
 
-.PLN fails because MSFS 2024 requires airport waypoints to include <WorldPosition> — even for airports.
-
-Airport waypoints (P34, N68) are missing <WorldPosition>
-In MSFS 2020, airports could omit <WorldPosition> because the sim looked them up by ICAO.
-
-In MSFS 2024, the planner requires every waypoint, including airports, to contain:
+Our code
 
 ```xml
-<WorldPosition>lat,lon,alt</WorldPosition>
-```
+<?xml version="2.0" encoding="UTF-8"?>
+``
 
-our airport entries look like this:
-
-```xml
-<ATCWaypoint id="P34">
-  <ATCWaypointType>Airport</ATCWaypointType>
-  <ICAO>
-    <ICAOIdent>P34</ICAOIdent>
-  </ICAO>
-</ATCWaypoint>
-```
-
-MSFS 2024 expects:
+MSFS requires
 
 ```xml
-<ATCWaypoint id="P34">
-  <ATCWaypointType>Airport</ATCWaypointType>
-  <WorldPosition>40.536111,-77.386111,0</WorldPosition>
-  <ICAO>
-    <ICAOIdent>P34</ICAOIdent>
-  </ICAO>
-</ATCWaypoint>
+<?xml version="1.0" encoding="UTF-8"?>
 ```
 
-Same for N68.
+2. <AppVersionMajor> must be 10 or greater
 
-The MSFS 2024 planner:
+Our code
 
-- Does not automatically look up airport coordinates
-- Requires explicit LLA for every waypoint
-- Validates that the first airport’s <WorldPosition> matches <DepartureLLA>
-- Validates that the last airport’s <WorldPosition> matches <DestinationLLA>
-- Your file fails that rule.
+```xml
+<AppVersionMajor>1</AppVersionMajor>
+```
+
+Correct
+
+```xml
+<AppVersionMajor>10</AppVersionMajor>
+```
+
+3. Waypoint numbering must start at WP1
+
+Our first waypoint
+
+```xml
+<ATCWaypoint id="WP2">
+```
+
+But MSFS expects sequential numbering starting at WP1.
+
+Correct sequence:
+
+WP1
+WP2
+WP3

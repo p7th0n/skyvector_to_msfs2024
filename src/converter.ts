@@ -152,11 +152,11 @@ export class PlnGenerator {
     
     const lines: string[] = [
       '<?xml version="1.0" encoding="UTF-8"?>',
-      '<SimBase.Document Type="AceXML" version="2,0">',
-      '  <Descr>FlightPlan</Descr>',
+      '<SimBase.Document Type="AceXML" version="1,0">',
+      '  <Descr>AceXML Document</Descr>',
       '  <FlightPlan.FlightPlan>',
       '    <AppVersion>',
-      '      <AppVersionMajor>1</AppVersionMajor>',
+      '      <AppVersionMajor>10</AppVersionMajor>',
       '      <AppVersionMinor>0</AppVersionMinor>',
       '    </AppVersion>',
       `    <Title>${this.escapeXml(departureId)} to ${this.escapeXml(arrivalId)}</Title>`,
@@ -170,23 +170,25 @@ export class PlnGenerator {
       '    <ATCWaypointList>'
     ];
     
+    let wpCounter = 1;
     waypoints.forEach((waypoint, index) => {
       if (waypoint.type === 'NAMED' && waypoint.name) {
         // Find coordinates for this airport waypoint
         let airportCoords = this.findCoordsForAirport(waypoints, index);
         
         lines.push(`      <ATCWaypoint id="${this.escapeXml(waypoint.name)}">`);
-        lines.push('        <ATCWaypointType>Airport</ATCWaypointType>');
+        lines.push(`        <ATCWaypointType>Airport</ATCWaypointType>`);
         lines.push(`        <WorldPosition>${airportCoords}</WorldPosition>`);
         lines.push('        <ICAO>');
         lines.push(`          <ICAOIdent>${this.escapeXml(waypoint.name)}</ICAOIdent>`);
         lines.push('        </ICAO>');
         lines.push('      </ATCWaypoint>');
       } else if (waypoint.type === 'GPS' && waypoint.latitude !== undefined && waypoint.longitude !== undefined) {
-        lines.push(`      <ATCWaypoint id="WP${index + 1}">`);
+        lines.push(`      <ATCWaypoint id="WP${wpCounter}">`);
         lines.push('        <ATCWaypointType>User</ATCWaypointType>');
         lines.push(`        <WorldPosition>${waypoint.latitude},${waypoint.longitude},0</WorldPosition>`);
         lines.push('      </ATCWaypoint>');
+        wpCounter++;
       }
     });
     

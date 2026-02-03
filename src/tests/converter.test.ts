@@ -119,6 +119,8 @@ describe('PlnGenerator', () => {
       const pln = PlnGenerator.generatePln(waypoints);
       
       expect(pln).toContain('<?xml version="1.0" encoding="UTF-8"?>');
+      expect(pln).toContain('<SimBase.Document Type="AceXML" version="1,0">');
+      expect(pln).toContain('<AppVersionMajor>10</AppVersionMajor>');
       expect(pln).toContain('<Title>P34 to N68</Title>');
       expect(pln).toContain('<DepartureID>P34</DepartureID>');
       expect(pln).toContain('<DestinationID>N68</DestinationID>');
@@ -175,6 +177,25 @@ describe('PlnGenerator', () => {
       // Verify all airports have both WorldPosition AND ICAO elements
       expect(pln).toMatch(/<ATCWaypoint id="P34">[\s\S]*?<WorldPosition>[\s\S]*?<ICAOIdent>P34<\/ICAOIdent>/);
       expect(pln).toMatch(/<ATCWaypoint id="N68">[\s\S]*?<WorldPosition>[\s\S]*?<ICAOIdent>N68<\/ICAOIdent>/);
+      
+      // Verify GPS waypoints use correct sequential numbering (WP1, WP2, WP3)
+      expect(pln).toContain('<ATCWaypoint id="WP1">');
+      expect(pln).toContain('<ATCWaypoint id="WP2">');
+      expect(pln).toContain('<ATCWaypoint id="WP3">');
+      expect(pln).not.toContain('<ATCWaypoint id="WP4">'); // Should not exist for this test case
+    });
+
+    it('should use proper MSFS 2024 XML format', () => {
+      const waypoints = [
+        { type: 'NAMED' as const, name: 'TEST' }
+      ];
+      
+      const pln = PlnGenerator.generatePln(waypoints);
+      
+      // MSFS 2024 specification compliance
+      expect(pln).toContain('<SimBase.Document Type="AceXML" version="1,0">');
+      expect(pln).toContain('<AppVersionMajor>10</AppVersionMajor>');
+      expect(pln).toContain('<Descr>AceXML Document</Descr>');
     });
   });
 });
