@@ -8,12 +8,13 @@ describe('InputValidator', () => {
         'P34 403210N0772310W N68',
         'KLAX 403210N 0772310W KORD',
         'LAX SFO',
-        'KLAX 340000N 1180000W KORD'
+        'KLAX 340000N 1180000W KORD',
+        'P34 403210N0772310W 402507N0773505W 401034N0774923W N68'  // Original test case
       ];
 
       validRoutes.forEach(route => {
         const errors = InputValidator.validateRouteInput(route);
-        expect(errors).toHaveLength(0);
+        expect(errors, `Route should be valid: ${route}`).toHaveLength(0);
       });
     });
 

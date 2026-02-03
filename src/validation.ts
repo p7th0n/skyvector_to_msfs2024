@@ -198,10 +198,13 @@ export class InputValidator {
   }
 
   private static looksLikeCoordinate(token: string): boolean {
-    return /^\d+[NSEW]?$/.test(token) || 
-           /^[NSEW]?\d+$/.test(token) ||
-           /^\d{5,}[NSEW]$/.test(token) ||
-           /^\d{6,}$/.test(token);
+    // Only consider it a coordinate if it has enough digits for a coordinate
+    // Valid coordinates: 403210N, 0772310W, 403210N0772310W
+    // Invalid/Airport codes: N68, P34, KLAX should NOT match
+    // Malformed coordinates: 40321N (too few digits) should match for error reporting
+    return /^\d{4,}[NSEW]$/.test(token) ||          // 4+ digits + hemisphere (coordinate pattern)
+           /^\d{6}[NS]\d{7}[EW]$/.test(token) ||    // Combined lat+lon
+           /^\d{8,}$/.test(token);                  // 8+ digits only (malformed)
   }
 
   static generateHelpfulErrorMessage(errors: ConversionError[]): string {
