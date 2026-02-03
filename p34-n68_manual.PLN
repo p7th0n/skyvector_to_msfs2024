@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+
+<SimBase.Document>
+    <FlightPlan.FlightPlan>
+        <DepartureID>P34</DepartureID>
+        <DestinationID>N68</DestinationID>
+        <Title>P34 - N68</Title>
+        <Descr>Flight from P34 to N68</Descr>
+        <FPType>VFR</FPType>
+        <CruisingAlt>12000.000</CruisingAlt>
+        <AppVersion>
+            <AppVersionMajor>12</AppVersionMajor>
+            <AppVersionMinor>2</AppVersionMinor>
+            <AppVersionBuild>282174</AppVersionBuild>
+        </AppVersion>
+        <DepartureDetails>
+            <RunwayNumberFP>26</RunwayNumberFP>
+        </DepartureDetails>
+        <ATCWaypoint id="4032N07723W">
+            <ATCWaypointType>User</ATCWaypointType>
+            <WorldPosition>N40° 32' 9.9996",W77° 23' 9.9996",+000000.00</WorldPosition>
+            <ICAO>
+                <ICAORegion>LL</ICAORegion>
+                <ICAOIdent>4032N077</ICAOIdent>
+            </ICAO>
+        </ATCWaypoint>
+        <ATCWaypoint id="4025N07735W">
+            <ATCWaypointType>User</ATCWaypointType>
+            <WorldPosition>N40° 25' 6.9996",W77° 35' 4.9992",+000000.00</WorldPosition>
+            <ICAO>
+                <ICAORegion>LL</ICAORegion>
+                <ICAOIdent>4025N077</ICAOIdent>
+            </ICAO>
+        </ATCWaypoint>
+        <ATCWaypoint id="4010N07749W">
+            <ATCWaypointType>User</ATCWaypointType>
+            <WorldPosition>N40° 10' 33.9996",W77° 49' 23.0016",+000000.00</WorldPosition>
+            <ICAO>
+                <ICAORegion>LL</ICAORegion>
+                <ICAOIdent>4010N077</ICAOIdent>
+            </ICAO>
+        </ATCWaypoint>
+        <ArrivalDetails>
+            <RunwayNumberFP>24</RunwayNumberFP>
+        </ArrivalDetails>
+    </FlightPlan.FlightPlan>
+</SimBase.Document>

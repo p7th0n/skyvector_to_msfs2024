@@ -114,6 +114,31 @@ export class PlnGenerator {
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&apos;');
   }
+
+  static formatMsfsWorldPosition(latitude: number, longitude: number, altitude: number = 0): string {
+    // Convert decimal degrees to MSFS 2024 format: N40° 32' 9.9996",W77° 23' 9.9996",+000000.00
+    
+    // Latitude formatting
+    const latAbs = Math.abs(latitude);
+    const latDeg = Math.floor(latAbs);
+    const latMinFloat = (latAbs - latDeg) * 60;
+    const latMin = Math.floor(latMinFloat);
+    const latSec = (latMinFloat - latMin) * 60;
+    const latHemisphere = latitude >= 0 ? 'N' : 'S';
+    
+    // Longitude formatting  
+    const lonAbs = Math.abs(longitude);
+    const lonDeg = Math.floor(lonAbs);
+    const lonMinFloat = (lonAbs - lonDeg) * 60;
+    const lonMin = Math.floor(lonMinFloat);
+    const lonSec = (lonMinFloat - lonMin) * 60;
+    const lonHemisphere = longitude >= 0 ? 'E' : 'W';
+    
+    // Altitude formatting (always positive with + sign and 2 decimal places)
+    const altFormatted = `+${Math.abs(altitude).toFixed(2).padStart(9, '0')}`;
+    
+    return `${latHemisphere}${latDeg}° ${latMin}' ${latSec.toFixed(4)}",${lonHemisphere}${lonDeg}° ${lonMin}' ${lonSec.toFixed(4)}",${altFormatted}`;
+  }
   
   static generatePln(waypoints: Waypoint[]): string {
     const namedWaypoints = waypoints.filter(wp => wp.type === 'NAMED');
@@ -152,95 +177,51 @@ export class PlnGenerator {
     
     const lines: string[] = [
       '<?xml version="1.0" encoding="UTF-8"?>',
-      '<SimBase.Document Type="AceXML" version="1,0">',
-      '  <Descr>AceXML Document</Descr>',
-      '  <FlightPlan.FlightPlan>',
-      '    <AppVersion>',
-      '      <AppVersionMajor>10</AppVersionMajor>',
-      '      <AppVersionMinor>0</AppVersionMinor>',
-      '    </AppVersion>',
-      `    <Title>${this.escapeXml(departureId)} to ${this.escapeXml(arrivalId)}</Title>`,
-      '    <FPType>VFR</FPType>',
-      '    <RouteType>Direct</RouteType>',
-      '    <CruisingAlt>3500</CruisingAlt>',
-      `    <DepartureID>${this.escapeXml(departureId)}</DepartureID>`,
-      `    <DepartureLLA>${departureLLA}</DepartureLLA>`,
-      `    <DestinationID>${this.escapeXml(arrivalId)}</DestinationID>`,
-      `    <DestinationLLA>${destinationLLA}</DestinationLLA>`,
-      '    <ATCWaypointList>'
+      '',
+      '<SimBase.Document>',
+      '    <FlightPlan.FlightPlan>',
+      `        <DepartureID>${this.escapeXml(departureId)}</DepartureID>`,
+      `        <DestinationID>${this.escapeXml(arrivalId)}</DestinationID>`,
+      `        <Title>${this.escapeXml(departureId)} - ${this.escapeXml(arrivalId)}</Title>`,
+      `        <Descr>Flight from ${this.escapeXml(departureId)} to ${this.escapeXml(arrivalId)}</Descr>`,
+      '        <FPType>VFR</FPType>',
+      '        <CruisingAlt>3500.000</CruisingAlt>',
+      '        <AppVersion>',
+      '            <AppVersionMajor>12</AppVersionMajor>',
+      '            <AppVersionMinor>2</AppVersionMinor>',
+      '            <AppVersionBuild>282174</AppVersionBuild>',
+      '        </AppVersion>'
     ];
     
-    let wpCounter = 1;
-    waypoints.forEach((waypoint, index) => {
-      if (waypoint.type === 'NAMED' && waypoint.name) {
-        // Find coordinates for this airport waypoint
-        let airportCoords = this.findCoordsForAirport(waypoints, index);
+    // Generate GPS waypoints only (airports are handled via departure/destination)
+    const gpsWaypoints = waypoints.filter(wp => wp.type === 'GPS' && wp.latitude !== undefined && wp.longitude !== undefined);
+    
+    gpsWaypoints.forEach((waypoint) => {
+      if (waypoint.latitude !== undefined && waypoint.longitude !== undefined) {
+        // Generate waypoint ID based on coordinates (similar to MSFS format)
+        const latDeg = Math.floor(Math.abs(waypoint.latitude));
+        const lonDeg = Math.floor(Math.abs(waypoint.longitude));
+        const latHem = waypoint.latitude >= 0 ? 'N' : 'S';
+        const lonHem = waypoint.longitude >= 0 ? 'E' : 'W';
+        const waypointId = `${latDeg.toString().padStart(4, '0')}${latHem}${lonDeg.toString().padStart(3, '0')}${lonHem}`;
         
-        lines.push(`      <ATCWaypoint id="${this.escapeXml(waypoint.name)}">`);
-        lines.push(`        <ATCWaypointType>Airport</ATCWaypointType>`);
-        lines.push(`        <WorldPosition>${airportCoords}</WorldPosition>`);
-        lines.push('        <ICAO>');
-        lines.push(`          <ICAOIdent>${this.escapeXml(waypoint.name)}</ICAOIdent>`);
-        lines.push('        </ICAO>');
-        lines.push('      </ATCWaypoint>');
-      } else if (waypoint.type === 'GPS' && waypoint.latitude !== undefined && waypoint.longitude !== undefined) {
-        lines.push(`      <ATCWaypoint id="WP${wpCounter}">`);
-        lines.push('        <ATCWaypointType>User</ATCWaypointType>');
-        lines.push(`        <WorldPosition>${waypoint.latitude},${waypoint.longitude},0</WorldPosition>`);
-        lines.push('      </ATCWaypoint>');
-        wpCounter++;
+        const worldPosition = this.formatMsfsWorldPosition(waypoint.latitude, waypoint.longitude, 0);
+        
+        lines.push(`        <ATCWaypoint id="${waypointId}">`);
+        lines.push('            <ATCWaypointType>User</ATCWaypointType>');
+        lines.push(`            <WorldPosition>${worldPosition}</WorldPosition>`);
+        lines.push('            <ICAO>');
+        lines.push('                <ICAORegion>LL</ICAORegion>');
+        lines.push(`                <ICAOIdent>${waypointId.substring(0, 7)}</ICAOIdent>`);
+        lines.push('            </ICAO>');
+        lines.push('        </ATCWaypoint>');
       }
     });
     
-    lines.push('    </ATCWaypointList>');
-    lines.push('  </FlightPlan.FlightPlan>');
+    lines.push('    </FlightPlan.FlightPlan>');
     lines.push('</SimBase.Document>');
+    lines.push('');
     
     return lines.join('\n');
-  }
-
-  private static findCoordsForAirport(waypoints: Waypoint[], airportIndex: number): string {
-    // Strategy: Look for GPS coordinates near this airport waypoint
-    // 1. Check immediately after this airport
-    // 2. Check immediately before this airport  
-    // 3. If first airport, use first GPS coordinate found
-    // 4. If last airport, use last GPS coordinate found
-    // 5. Default to 0,0,0 if no GPS coordinates available
-
-    // Check next waypoint
-    if (airportIndex + 1 < waypoints.length) {
-      const nextWp = waypoints[airportIndex + 1];
-      if (nextWp?.type === 'GPS' && nextWp.latitude !== undefined && nextWp.longitude !== undefined) {
-        return `${nextWp.latitude},${nextWp.longitude},0`;
-      }
-    }
-
-    // Check previous waypoint
-    if (airportIndex > 0) {
-      const prevWp = waypoints[airportIndex - 1];
-      if (prevWp?.type === 'GPS' && prevWp.latitude !== undefined && prevWp.longitude !== undefined) {
-        return `${prevWp.latitude},${prevWp.longitude},0`;
-      }
-    }
-
-    // If this is the first waypoint, use first available GPS coordinate
-    if (airportIndex === 0) {
-      const firstGps = waypoints.find(wp => wp.type === 'GPS' && wp.latitude !== undefined && wp.longitude !== undefined);
-      if (firstGps && firstGps.latitude !== undefined && firstGps.longitude !== undefined) {
-        return `${firstGps.latitude},${firstGps.longitude},0`;
-      }
-    }
-
-    // If this is the last waypoint, use last available GPS coordinate
-    if (airportIndex === waypoints.length - 1) {
-      const gpsWaypoints = waypoints.filter(wp => wp.type === 'GPS' && wp.latitude !== undefined && wp.longitude !== undefined);
-      const lastGps = gpsWaypoints[gpsWaypoints.length - 1];
-      if (lastGps && lastGps.latitude !== undefined && lastGps.longitude !== undefined) {
-        return `${lastGps.latitude},${lastGps.longitude},0`;
-      }
-    }
-
-    // Default fallback
-    return '0,0,0';
   }
 }

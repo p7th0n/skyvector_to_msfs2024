@@ -25,7 +25,7 @@ Our code
 Correct
 
 ```xml
-<AppVersionMajor>10</AppVersionMajor>
+<AppVersionMajor>12</AppVersionMajor>
 ```
 
 3. Waypoint numbering must start at WP1

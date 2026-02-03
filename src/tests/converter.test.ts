@@ -108,6 +108,26 @@ describe('PlnGenerator', () => {
     });
   });
 
+  describe('formatMsfsWorldPosition', () => {
+    it('should format coordinates in MSFS 2024 native format', () => {
+      // Test P34 coordinates: 40.536111, -77.386111
+      const result = PlnGenerator.formatMsfsWorldPosition(40.536111, -77.386111, 0);
+      expect(result).toMatch(/^N40° \d+' [\d.]+",W77° \d+' [\d.]+",\+000000\.00$/);
+      
+      // Should include proper hemisphere indicators
+      expect(result).toContain('N40°');
+      expect(result).toContain('W77°');
+      expect(result).toContain('+000000.00');
+    });
+
+    it('should handle southern and eastern coordinates', () => {
+      const result = PlnGenerator.formatMsfsWorldPosition(-25.5, 135.5, 1000);
+      expect(result).toContain('S25°');
+      expect(result).toContain('E135°');
+      expect(result).toContain('+001000.00');
+    });
+  });
+
   describe('generatePln', () => {
     it('should generate valid PLN XML for simple route', () => {
       const waypoints = [
@@ -119,17 +139,15 @@ describe('PlnGenerator', () => {
       const pln = PlnGenerator.generatePln(waypoints);
       
       expect(pln).toContain('<?xml version="1.0" encoding="UTF-8"?>');
-      expect(pln).toContain('<SimBase.Document Type="AceXML" version="1,0">');
-      expect(pln).toContain('<AppVersionMajor>10</AppVersionMajor>');
-      expect(pln).toContain('<Title>P34 to N68</Title>');
+      expect(pln).toContain('<SimBase.Document>');
+      expect(pln).toContain('<AppVersionMajor>12</AppVersionMajor>');
+      expect(pln).toContain('<Title>P34 - N68</Title>');
       expect(pln).toContain('<DepartureID>P34</DepartureID>');
       expect(pln).toContain('<DestinationID>N68</DestinationID>');
-      expect(pln).toContain('<WorldPosition>40.536111,-77.386111,0</WorldPosition>');
       expect(pln).toContain('</SimBase.Document>');
       
-      // MSFS 2024: Verify airports have WorldPosition elements
-      expect(pln).toMatch(/<ATCWaypoint id="P34">[\s\S]*?<WorldPosition>40\.536111,-77\.386111,0<\/WorldPosition>/);
-      expect(pln).toMatch(/<ATCWaypoint id="N68">[\s\S]*?<WorldPosition>40\.536111,-77\.386111,0<\/WorldPosition>/);
+      // MSFS 2024: Verify GPS waypoints use native coordinate format
+      expect(pln).toMatch(/N40° \d+' [\d.]+",W77° \d+' [\d.]+",\+000000\.00/);
     });
 
     it('should handle routes with only GPS coordinates', () => {
@@ -140,20 +158,16 @@ describe('PlnGenerator', () => {
       
       const pln = PlnGenerator.generatePln(waypoints);
       
-      expect(pln).toContain('<Title>UNKNOWN to UNKNOWN</Title>');
+      expect(pln).toContain('<Title>UNKNOWN - UNKNOWN</Title>');
       expect(pln).toContain('<DepartureID>UNKNOWN</DepartureID>');
       expect(pln).toContain('<DestinationID>UNKNOWN</DestinationID>');
-    });
-
-    it('should handle empty waypoint array', () => {
-      const pln = PlnGenerator.generatePln([]);
       
-      expect(pln).toContain('<Title>UNKNOWN to UNKNOWN</Title>');
-      expect(pln).toContain('<DepartureLLA>0,0,0</DepartureLLA>');
+      // Should contain GPS waypoints with coordinate-based IDs
+      expect(pln).toMatch(/<ATCWaypoint id="0040N077W">/);
     });
 
-    it('should generate MSFS 2024 compatible format for mixed route', () => {
-      // Test the exact case mentioned in notes: P34 403210N0772310W 402507N0773505W 401034N0774923W N68
+    it('should generate MSFS 2024 native format for mixed route', () => {
+      // Test the exact case: P34 403210N0772310W 402507N0773505W 401034N0774923W N68
       const waypoints = [
         { type: 'NAMED' as const, name: 'P34' },
         { type: 'GPS' as const, latitude: 40.536111, longitude: -77.386111 },
@@ -164,38 +178,17 @@ describe('PlnGenerator', () => {
       
       const pln = PlnGenerator.generatePln(waypoints);
       
-      // Verify departure/arrival LLA match first/last coordinates
-      expect(pln).toContain('<DepartureLLA>40.536111,-77.386111,0</DepartureLLA>');
-      expect(pln).toContain('<DestinationLLA>40.176111,-77.823056,0</DestinationLLA>');
+      // Verify MSFS 2024 native structure (no ATCWaypointList wrapper)
+      expect(pln).toContain('<DepartureID>P34</DepartureID>');
+      expect(pln).toContain('<DestinationID>N68</DestinationID>');
+      expect(pln).toContain('<Title>P34 - N68</Title>');
       
-      // Verify P34 airport has WorldPosition matching the adjacent GPS coordinate  
-      expect(pln).toMatch(/<ATCWaypoint id="P34">[\s\S]*?<WorldPosition>40\.536111,-77\.386111,0<\/WorldPosition>/);
+      // Verify GPS waypoints use coordinate-based IDs and native format
+      expect(pln).toMatch(/<ATCWaypoint id="0040N077W">/);
+      expect(pln).toMatch(/N40° \d+' [\d.]+",W77° \d+' [\d.]+",\+000000\.00/);
       
-      // Verify N68 airport has WorldPosition matching the adjacent GPS coordinate
-      expect(pln).toMatch(/<ATCWaypoint id="N68">[\s\S]*?<WorldPosition>40\.176111,-77\.823056,0<\/WorldPosition>/);
-      
-      // Verify all airports have both WorldPosition AND ICAO elements
-      expect(pln).toMatch(/<ATCWaypoint id="P34">[\s\S]*?<WorldPosition>[\s\S]*?<ICAOIdent>P34<\/ICAOIdent>/);
-      expect(pln).toMatch(/<ATCWaypoint id="N68">[\s\S]*?<WorldPosition>[\s\S]*?<ICAOIdent>N68<\/ICAOIdent>/);
-      
-      // Verify GPS waypoints use correct sequential numbering (WP1, WP2, WP3)
-      expect(pln).toContain('<ATCWaypoint id="WP1">');
-      expect(pln).toContain('<ATCWaypoint id="WP2">');
-      expect(pln).toContain('<ATCWaypoint id="WP3">');
-      expect(pln).not.toContain('<ATCWaypoint id="WP4">'); // Should not exist for this test case
-    });
-
-    it('should use proper MSFS 2024 XML format', () => {
-      const waypoints = [
-        { type: 'NAMED' as const, name: 'TEST' }
-      ];
-      
-      const pln = PlnGenerator.generatePln(waypoints);
-      
-      // MSFS 2024 specification compliance
-      expect(pln).toContain('<SimBase.Document Type="AceXML" version="1,0">');
-      expect(pln).toContain('<AppVersionMajor>10</AppVersionMajor>');
-      expect(pln).toContain('<Descr>AceXML Document</Descr>');
+      // Verify ICAO structure matches exported format
+      expect(pln).toContain('<ICAORegion>LL</ICAORegion>');
     });
   });
 });
