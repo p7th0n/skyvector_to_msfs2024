@@ -124,6 +124,10 @@ describe('PlnGenerator', () => {
       expect(pln).toContain('<DestinationID>N68</DestinationID>');
       expect(pln).toContain('<WorldPosition>40.536111,-77.386111,0</WorldPosition>');
       expect(pln).toContain('</SimBase.Document>');
+      
+      // MSFS 2024: Verify airports have WorldPosition elements
+      expect(pln).toMatch(/<ATCWaypoint id="P34">[\s\S]*?<WorldPosition>40\.536111,-77\.386111,0<\/WorldPosition>/);
+      expect(pln).toMatch(/<ATCWaypoint id="N68">[\s\S]*?<WorldPosition>40\.536111,-77\.386111,0<\/WorldPosition>/);
     });
 
     it('should handle routes with only GPS coordinates', () => {
@@ -144,6 +148,33 @@ describe('PlnGenerator', () => {
       
       expect(pln).toContain('<Title>UNKNOWN to UNKNOWN</Title>');
       expect(pln).toContain('<DepartureLLA>0,0,0</DepartureLLA>');
+    });
+
+    it('should generate MSFS 2024 compatible format for mixed route', () => {
+      // Test the exact case mentioned in notes: P34 403210N0772310W 402507N0773505W 401034N0774923W N68
+      const waypoints = [
+        { type: 'NAMED' as const, name: 'P34' },
+        { type: 'GPS' as const, latitude: 40.536111, longitude: -77.386111 },
+        { type: 'GPS' as const, latitude: 40.418611, longitude: -77.584722 },
+        { type: 'GPS' as const, latitude: 40.176111, longitude: -77.823056 },
+        { type: 'NAMED' as const, name: 'N68' }
+      ];
+      
+      const pln = PlnGenerator.generatePln(waypoints);
+      
+      // Verify departure/arrival LLA match first/last coordinates
+      expect(pln).toContain('<DepartureLLA>40.536111,-77.386111,0</DepartureLLA>');
+      expect(pln).toContain('<DestinationLLA>40.176111,-77.823056,0</DestinationLLA>');
+      
+      // Verify P34 airport has WorldPosition matching the adjacent GPS coordinate  
+      expect(pln).toMatch(/<ATCWaypoint id="P34">[\s\S]*?<WorldPosition>40\.536111,-77\.386111,0<\/WorldPosition>/);
+      
+      // Verify N68 airport has WorldPosition matching the adjacent GPS coordinate
+      expect(pln).toMatch(/<ATCWaypoint id="N68">[\s\S]*?<WorldPosition>40\.176111,-77\.823056,0<\/WorldPosition>/);
+      
+      // Verify all airports have both WorldPosition AND ICAO elements
+      expect(pln).toMatch(/<ATCWaypoint id="P34">[\s\S]*?<WorldPosition>[\s\S]*?<ICAOIdent>P34<\/ICAOIdent>/);
+      expect(pln).toMatch(/<ATCWaypoint id="N68">[\s\S]*?<WorldPosition>[\s\S]*?<ICAOIdent>N68<\/ICAOIdent>/);
     });
   });
 });

@@ -117,20 +117,34 @@ export class PlnGenerator {
   
   static generatePln(waypoints: Waypoint[]): string {
     const namedWaypoints = waypoints.filter(wp => wp.type === 'NAMED');
-    const gpsWaypoints = waypoints.filter(wp => wp.type === 'GPS');
     
     const departureId = namedWaypoints[0]?.name || 'UNKNOWN';
     const arrivalId = namedWaypoints[namedWaypoints.length - 1]?.name || 'UNKNOWN';
     
+    // Find coordinates for departure and arrival airports
+    // Look for GPS coordinates near the first and last named waypoints
+    const firstWaypoint = waypoints[0];
+    const lastWaypoint = waypoints[waypoints.length - 1];
+    
     let departureLLA = '0,0,0';
     let destinationLLA = '0,0,0';
     
-    if (gpsWaypoints.length > 0) {
-      const firstGps = gpsWaypoints[0];
-      const lastGps = gpsWaypoints[gpsWaypoints.length - 1];
+    // For departure: use first waypoint if it's GPS, otherwise look for next GPS coordinate
+    if (firstWaypoint?.type === 'GPS' && firstWaypoint.latitude !== undefined && firstWaypoint.longitude !== undefined) {
+      departureLLA = `${firstWaypoint.latitude},${firstWaypoint.longitude},0`;
+    } else {
+      const firstGps = waypoints.find(wp => wp.type === 'GPS' && wp.latitude !== undefined && wp.longitude !== undefined);
       if (firstGps && firstGps.latitude !== undefined && firstGps.longitude !== undefined) {
         departureLLA = `${firstGps.latitude},${firstGps.longitude},0`;
       }
+    }
+    
+    // For destination: use last waypoint if it's GPS, otherwise look for previous GPS coordinate  
+    if (lastWaypoint?.type === 'GPS' && lastWaypoint.latitude !== undefined && lastWaypoint.longitude !== undefined) {
+      destinationLLA = `${lastWaypoint.latitude},${lastWaypoint.longitude},0`;
+    } else {
+      const gpsWaypoints = waypoints.filter(wp => wp.type === 'GPS' && wp.latitude !== undefined && wp.longitude !== undefined);
+      const lastGps = gpsWaypoints[gpsWaypoints.length - 1];
       if (lastGps && lastGps.latitude !== undefined && lastGps.longitude !== undefined) {
         destinationLLA = `${lastGps.latitude},${lastGps.longitude},0`;
       }
@@ -158,8 +172,12 @@ export class PlnGenerator {
     
     waypoints.forEach((waypoint, index) => {
       if (waypoint.type === 'NAMED' && waypoint.name) {
+        // Find coordinates for this airport waypoint
+        let airportCoords = this.findCoordsForAirport(waypoints, index);
+        
         lines.push(`      <ATCWaypoint id="${this.escapeXml(waypoint.name)}">`);
         lines.push('        <ATCWaypointType>Airport</ATCWaypointType>');
+        lines.push(`        <WorldPosition>${airportCoords}</WorldPosition>`);
         lines.push('        <ICAO>');
         lines.push(`          <ICAOIdent>${this.escapeXml(waypoint.name)}</ICAOIdent>`);
         lines.push('        </ICAO>');
@@ -177,5 +195,50 @@ export class PlnGenerator {
     lines.push('</SimBase.Document>');
     
     return lines.join('\n');
+  }
+
+  private static findCoordsForAirport(waypoints: Waypoint[], airportIndex: number): string {
+    // Strategy: Look for GPS coordinates near this airport waypoint
+    // 1. Check immediately after this airport
+    // 2. Check immediately before this airport  
+    // 3. If first airport, use first GPS coordinate found
+    // 4. If last airport, use last GPS coordinate found
+    // 5. Default to 0,0,0 if no GPS coordinates available
+
+    // Check next waypoint
+    if (airportIndex + 1 < waypoints.length) {
+      const nextWp = waypoints[airportIndex + 1];
+      if (nextWp?.type === 'GPS' && nextWp.latitude !== undefined && nextWp.longitude !== undefined) {
+        return `${nextWp.latitude},${nextWp.longitude},0`;
+      }
+    }
+
+    // Check previous waypoint
+    if (airportIndex > 0) {
+      const prevWp = waypoints[airportIndex - 1];
+      if (prevWp?.type === 'GPS' && prevWp.latitude !== undefined && prevWp.longitude !== undefined) {
+        return `${prevWp.latitude},${prevWp.longitude},0`;
+      }
+    }
+
+    // If this is the first waypoint, use first available GPS coordinate
+    if (airportIndex === 0) {
+      const firstGps = waypoints.find(wp => wp.type === 'GPS' && wp.latitude !== undefined && wp.longitude !== undefined);
+      if (firstGps && firstGps.latitude !== undefined && firstGps.longitude !== undefined) {
+        return `${firstGps.latitude},${firstGps.longitude},0`;
+      }
+    }
+
+    // If this is the last waypoint, use last available GPS coordinate
+    if (airportIndex === waypoints.length - 1) {
+      const gpsWaypoints = waypoints.filter(wp => wp.type === 'GPS' && wp.latitude !== undefined && wp.longitude !== undefined);
+      const lastGps = gpsWaypoints[gpsWaypoints.length - 1];
+      if (lastGps && lastGps.latitude !== undefined && lastGps.longitude !== undefined) {
+        return `${lastGps.latitude},${lastGps.longitude},0`;
+      }
+    }
+
+    // Default fallback
+    return '0,0,0';
   }
 }
