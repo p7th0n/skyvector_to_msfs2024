@@ -16,13 +16,15 @@ A Single Page Application (SPA) that converts flight plans from SkyVector.com fo
 ## Supported Formats
 
 ### Input (SkyVector Format)
+
 - **Airport Codes**: `P34`, `KLAX`, `N68`
-- **GPS Coordinates**: 
+- **GPS Coordinates**:
   - Combined: `403210N0772310W`
   - Separate: `403210N 0772310W`
   - Mixed routes: `P34 403210N0772310W 402507N0773505W N68`
 
 ### Output (MSFS 2024 .PLN Format)
+
 - Valid XML format compatible with Microsoft Flight Simulator 2024
 - Proper waypoint structure with Airport and User waypoint types
 - Correct coordinate conversion to decimal degrees
@@ -30,11 +32,13 @@ A Single Page Application (SPA) that converts flight plans from SkyVector.com fo
 ## Example
 
 **Input:**
-```
+
+```bash
 P34 403210N0772310W 402507N0773505W 401034N0774923W N68
 ```
 
 **Output:**
+
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <SimBase.Document Type="AceXML" version="2,0">
@@ -50,10 +54,12 @@ P34 403210N0772310W 402507N0773505W 401034N0774923W N68
 ## Development
 
 ### Prerequisites
+
 - Node.js 18 or higher
 - npm
 
 ### Setup
+
 ```bash
 # Install dependencies
 npm install
@@ -72,7 +78,8 @@ npm run lint
 ```
 
 ### Project Structure
-```
+
+```bash
 src/
 ├── converter.ts     # Core conversion logic
 ├── validation.ts    # Input validation and error handling
@@ -87,6 +94,7 @@ src/
 This project is configured for automatic deployment to GitHub Pages using GitHub Actions. The deployment happens automatically when you push to the main branch.
 
 ### Manual Deployment
+
 1. Build the project: `npm run build`
 2. Deploy the `dist` folder to your preferred hosting service
 
@@ -111,4 +119,3 @@ This project is configured for automatic deployment to GitHub Pages using GitHub
 ## License
 
 MIT License - see LICENSE file for details.
-
