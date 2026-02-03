@@ -1,4 +1,4 @@
-import { Waypoint, FlightPlan, ConversionError } from './types.js';
+import { Waypoint, FlightPlan, ConversionError, PlnResult } from './types.js';
 
 const LAT_REGEX = /^(\d{2})(\d{2})(\d{2})([NS])$/;
 const LON_REGEX = /^(\d{3})(\d{2})(\d{2})([EW])$/;
@@ -140,7 +140,7 @@ export class PlnGenerator {
     return `${latHemisphere}${latDeg}° ${latMin}' ${latSec.toFixed(4)}",${lonHemisphere}${lonDeg}° ${lonMin}' ${lonSec.toFixed(4)}",${altFormatted}`;
   }
   
-  static generatePln(waypoints: Waypoint[]): string {
+  static generatePln(waypoints: Waypoint[]): PlnResult {
     const namedWaypoints = waypoints.filter(wp => wp.type === 'NAMED');
     
     const departureId = namedWaypoints[0]?.name || 'UNKNOWN';
@@ -222,6 +222,10 @@ export class PlnGenerator {
     lines.push('</SimBase.Document>');
     lines.push('');
     
-    return lines.join('\n');
+    return {
+      content: lines.join('\n'),
+      departureId,
+      arrivalId
+    };
   }
 }

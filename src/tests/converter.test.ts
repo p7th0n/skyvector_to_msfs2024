@@ -136,18 +136,22 @@ describe('PlnGenerator', () => {
         { type: 'NAMED' as const, name: 'N68' }
       ];
       
-      const pln = PlnGenerator.generatePln(waypoints);
+      const result = PlnGenerator.generatePln(waypoints);
       
-      expect(pln).toContain('<?xml version="1.0" encoding="UTF-8"?>');
-      expect(pln).toContain('<SimBase.Document>');
-      expect(pln).toContain('<AppVersionMajor>12</AppVersionMajor>');
-      expect(pln).toContain('<Title>P34 - N68</Title>');
-      expect(pln).toContain('<DepartureID>P34</DepartureID>');
-      expect(pln).toContain('<DestinationID>N68</DestinationID>');
-      expect(pln).toContain('</SimBase.Document>');
+      expect(result.content).toContain('<?xml version="1.0" encoding="UTF-8"?>');
+      expect(result.content).toContain('<SimBase.Document>');
+      expect(result.content).toContain('<AppVersionMajor>12</AppVersionMajor>');
+      expect(result.content).toContain('<Title>P34 - N68</Title>');
+      expect(result.content).toContain('<DepartureID>P34</DepartureID>');
+      expect(result.content).toContain('<DestinationID>N68</DestinationID>');
+      expect(result.content).toContain('</SimBase.Document>');
+      
+      // Verify metadata
+      expect(result.departureId).toBe('P34');
+      expect(result.arrivalId).toBe('N68');
       
       // MSFS 2024: Verify GPS waypoints use native coordinate format
-      expect(pln).toMatch(/N40° \d+' [\d.]+",W77° \d+' [\d.]+",\+000000\.00/);
+      expect(result.content).toMatch(/N40° \d+' [\d.]+",W77° \d+' [\d.]+",\+000000\.00/);
     });
 
     it('should handle routes with only GPS coordinates', () => {
@@ -156,14 +160,16 @@ describe('PlnGenerator', () => {
         { type: 'GPS' as const, latitude: 40.418611, longitude: -77.584722 }
       ];
       
-      const pln = PlnGenerator.generatePln(waypoints);
+      const result = PlnGenerator.generatePln(waypoints);
       
-      expect(pln).toContain('<Title>UNKNOWN - UNKNOWN</Title>');
-      expect(pln).toContain('<DepartureID>UNKNOWN</DepartureID>');
-      expect(pln).toContain('<DestinationID>UNKNOWN</DestinationID>');
+      expect(result.content).toContain('<Title>UNKNOWN - UNKNOWN</Title>');
+      expect(result.content).toContain('<DepartureID>UNKNOWN</DepartureID>');
+      expect(result.content).toContain('<DestinationID>UNKNOWN</DestinationID>');
+      expect(result.departureId).toBe('UNKNOWN');
+      expect(result.arrivalId).toBe('UNKNOWN');
       
       // Should contain GPS waypoints with coordinate-based IDs
-      expect(pln).toMatch(/<ATCWaypoint id="0040N077W">/);
+      expect(result.content).toMatch(/<ATCWaypoint id="0040N077W">/);
     });
 
     it('should generate MSFS 2024 native format for mixed route', () => {
@@ -176,19 +182,21 @@ describe('PlnGenerator', () => {
         { type: 'NAMED' as const, name: 'N68' }
       ];
       
-      const pln = PlnGenerator.generatePln(waypoints);
+      const result = PlnGenerator.generatePln(waypoints);
       
       // Verify MSFS 2024 native structure (no ATCWaypointList wrapper)
-      expect(pln).toContain('<DepartureID>P34</DepartureID>');
-      expect(pln).toContain('<DestinationID>N68</DestinationID>');
-      expect(pln).toContain('<Title>P34 - N68</Title>');
+      expect(result.content).toContain('<DepartureID>P34</DepartureID>');
+      expect(result.content).toContain('<DestinationID>N68</DestinationID>');
+      expect(result.content).toContain('<Title>P34 - N68</Title>');
+      expect(result.departureId).toBe('P34');
+      expect(result.arrivalId).toBe('N68');
       
       // Verify GPS waypoints use coordinate-based IDs and native format
-      expect(pln).toMatch(/<ATCWaypoint id="0040N077W">/);
-      expect(pln).toMatch(/N40° \d+' [\d.]+",W77° \d+' [\d.]+",\+000000\.00/);
+      expect(result.content).toMatch(/<ATCWaypoint id="0040N077W">/);
+      expect(result.content).toMatch(/N40° \d+' [\d.]+",W77° \d+' [\d.]+",\+000000\.00/);
       
       // Verify ICAO structure matches exported format
-      expect(pln).toContain('<ICAORegion>LL</ICAORegion>');
+      expect(result.content).toContain('<ICAORegion>LL</ICAORegion>');
     });
   });
 });

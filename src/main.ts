@@ -1,6 +1,7 @@
 import './style.css';
 import { RouteParser, PlnGenerator, CoordinateConverter } from './converter.js';
 import { InputValidator } from './validation.js';
+import { FilenameUtils } from './filename-utils.js';
 
 class SkyVectorConverter {
   private textInput!: HTMLTextAreaElement;
@@ -12,6 +13,12 @@ class SkyVectorConverter {
   private errorContainer!: HTMLDivElement;
   private successContainer!: HTMLDivElement;
   private fileUploadArea!: HTMLDivElement;
+  private filenameInput!: HTMLInputElement;
+  private filenameReset!: HTMLButtonElement;
+  private filenameValidation!: HTMLDivElement;
+
+  private currentDepartureId: string = '';
+  private currentArrivalId: string = '';
 
   constructor() {
     this.initializeDOM();
@@ -71,6 +78,23 @@ class SkyVectorConverter {
             placeholder="Your converted .PLN file will appear here..."
           ></textarea>
 
+          <div class="filename-section">
+            <label class="filename-label" for="filenameInput">Filename:</label>
+            <div class="filename-container">
+              <input 
+                type="text" 
+                id="filenameInput"
+                class="filename-input"
+                placeholder="filename.pln"
+                disabled
+              />
+              <button id="filenameReset" class="filename-reset" disabled>
+                Reset
+              </button>
+            </div>
+            <div id="filenameValidation" class="filename-validation"></div>
+          </div>
+
           <div class="output-actions">
             <button id="downloadButton" class="action-button" disabled>
               📥 Download .PLN
@@ -92,6 +116,9 @@ class SkyVectorConverter {
     this.errorContainer = document.getElementById('errorContainer') as HTMLDivElement;
     this.successContainer = document.getElementById('successContainer') as HTMLDivElement;
     this.fileUploadArea = document.getElementById('fileUpload') as HTMLDivElement;
+    this.filenameInput = document.getElementById('filenameInput') as HTMLInputElement;
+    this.filenameReset = document.getElementById('filenameReset') as HTMLButtonElement;
+    this.filenameValidation = document.getElementById('filenameValidation') as HTMLDivElement;
   }
 
   private setupEventListeners(): void {
@@ -106,6 +133,9 @@ class SkyVectorConverter {
     this.fileUploadArea.addEventListener('dragleave', () => this.handleDragLeave());
 
     this.textInput.addEventListener('input', () => this.clearMessages());
+
+    this.filenameInput.addEventListener('input', () => this.validateFilename());
+    this.filenameReset.addEventListener('click', () => this.resetFilename());
   }
 
   private handleDragOver(e: DragEvent): void {
@@ -173,11 +203,19 @@ class SkyVectorConverter {
         throw new Error('No valid waypoints found in the input');
       }
 
-      const plnContent = PlnGenerator.generatePln(waypoints);
-      this.outputPreview.value = plnContent;
+      const plnResult = PlnGenerator.generatePln(waypoints);
+      this.outputPreview.value = plnResult.content;
       
+      // Store airport info and generate filename
+      this.currentDepartureId = plnResult.departureId;
+      this.currentArrivalId = plnResult.arrivalId;
+      this.generateAndSetFilename();
+      
+      // Enable UI elements
       this.downloadButton.disabled = false;
       this.copyButton.disabled = false;
+      this.filenameInput.disabled = false;
+      this.filenameReset.disabled = false;
       
       this.showSuccess(`✅ Converted ${waypoints.length} waypoint(s) successfully`);
 
@@ -186,6 +224,10 @@ class SkyVectorConverter {
       this.outputPreview.value = '';
       this.downloadButton.disabled = true;
       this.copyButton.disabled = true;
+      this.filenameInput.disabled = true;
+      this.filenameReset.disabled = true;
+      this.filenameInput.value = '';
+      this.filenameValidation.textContent = '';
     } finally {
       this.convertButton.disabled = false;
       this.convertButton.textContent = 'Convert to MSFS 2024';
@@ -197,19 +239,63 @@ class SkyVectorConverter {
     if (!content) return;
 
     try {
+      const validation = FilenameUtils.validateAndSanitizeFilename(this.filenameInput.value);
+      const filename = validation.sanitized;
+
       const blob = new Blob([content], { type: 'application/xml' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'flightplan.pln';
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       
-      this.showSuccess('Flight plan downloaded successfully');
+      this.showSuccess(`Flight plan downloaded as: ${filename}`);
     } catch (error) {
       this.showError('Failed to download file');
+    }
+  }
+
+  private generateAndSetFilename(): void {
+    const filename = FilenameUtils.generateFlightPlanFilename(this.currentDepartureId, this.currentArrivalId);
+    this.filenameInput.value = filename;
+    this.validateFilename();
+  }
+
+  private resetFilename(): void {
+    this.generateAndSetFilename();
+  }
+
+  private validateFilename(): void {
+    const filename = this.filenameInput.value.trim();
+    
+    if (!filename) {
+      this.filenameValidation.textContent = 'Filename cannot be empty';
+      this.filenameValidation.className = 'filename-validation error';
+      this.filenameInput.classList.add('invalid');
+      this.downloadButton.disabled = true;
+      return;
+    }
+
+    const validation = FilenameUtils.validateAndSanitizeFilename(filename);
+    
+    if (validation.isValid) {
+      this.filenameValidation.textContent = '';
+      this.filenameInput.classList.remove('invalid');
+      this.downloadButton.disabled = false;
+    } else {
+      this.filenameValidation.textContent = validation.errors.join(', ');
+      this.filenameValidation.className = 'filename-validation warning';
+      this.filenameInput.classList.remove('invalid');
+      
+      // Update the field with sanitized version
+      if (validation.sanitized !== filename) {
+        this.filenameInput.value = validation.sanitized;
+      }
+      
+      this.downloadButton.disabled = false; // Allow download with sanitized version
     }
   }
 

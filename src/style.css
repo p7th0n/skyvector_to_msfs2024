@@ -154,6 +154,79 @@ body {
   overflow-wrap: break-word;
 }
 
+.filename-section {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.filename-label {
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.filename-container {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.filename-input {
+  flex: 1;
+  padding: 0.5rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 6px;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 0.9rem;
+  transition: border-color 0.3s ease;
+}
+
+.filename-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.filename-input.invalid {
+  border-color: #dc2626;
+}
+
+.filename-reset {
+  background: #6b7280;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.filename-reset:hover:not(:disabled) {
+  background: #4b5563;
+}
+
+.filename-reset:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.filename-validation {
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+  min-height: 1rem;
+}
+
+.filename-validation.error {
+  color: #dc2626;
+}
+
+.filename-validation.warning {
+  color: #d97706;
+}
+
 .output-actions {
   display: flex;
   gap: 1rem;

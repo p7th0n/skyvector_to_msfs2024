@@ -21,3 +21,9 @@ export interface ConversionError {
   position?: number;
   input?: string;
 }
+
+export interface PlnResult {
+  content: string;
+  departureId: string;
+  arrivalId: string;
+}
