@@ -19,6 +19,9 @@ export class CoordinateConverter {
     }
     
     const [, degStr, minStr, secStr, hemisphere] = match;
+    if (!degStr || !minStr || !secStr || !hemisphere) {
+      throw new Error(`Invalid coordinate format: ${coord}`);
+    }
     const deg = parseInt(degStr, 10);
     const minutes = parseInt(minStr, 10);
     const seconds = parseInt(secStr, 10);

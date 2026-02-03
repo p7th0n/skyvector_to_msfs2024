@@ -104,6 +104,14 @@ export class InputValidator {
     }
 
     const [, degStr, minStr, secStr, hemisphere] = match;
+    if (!degStr || !minStr || !secStr || !hemisphere) {
+      errors.push({
+        message: `Invalid coordinate format at position ${position + 1}: "${coord}". Malformed coordinate data.`,
+        position,
+        input: coord
+      });
+      return errors;
+    }
     const deg = parseInt(degStr, 10);
     const minutes = parseInt(minStr, 10);
     const seconds = parseInt(secStr, 10);

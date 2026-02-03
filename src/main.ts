@@ -3,15 +3,15 @@ import { RouteParser, PlnGenerator, CoordinateConverter } from './converter.js';
 import { InputValidator } from './validation.js';
 
 class SkyVectorConverter {
-  private textInput: HTMLTextAreaElement;
-  private fileInput: HTMLInputElement;
-  private convertButton: HTMLButtonElement;
-  private outputPreview: HTMLTextAreaElement;
-  private downloadButton: HTMLButtonElement;
-  private copyButton: HTMLButtonElement;
-  private errorContainer: HTMLDivElement;
-  private successContainer: HTMLDivElement;
-  private fileUploadArea: HTMLDivElement;
+  private textInput!: HTMLTextAreaElement;
+  private fileInput!: HTMLInputElement;
+  private convertButton!: HTMLButtonElement;
+  private outputPreview!: HTMLTextAreaElement;
+  private downloadButton!: HTMLButtonElement;
+  private copyButton!: HTMLButtonElement;
+  private errorContainer!: HTMLDivElement;
+  private successContainer!: HTMLDivElement;
+  private fileUploadArea!: HTMLDivElement;
 
   constructor() {
     this.initializeDOM();
@@ -122,7 +122,7 @@ class SkyVectorConverter {
     this.fileUploadArea.classList.remove('dragover');
     
     const files = e.dataTransfer?.files;
-    if (files && files.length > 0) {
+    if (files && files.length > 0 && files[0]) {
       this.processFile(files[0]);
     }
   }
@@ -130,7 +130,7 @@ class SkyVectorConverter {
   private handleFileSelect(e: Event): void {
     const target = e.target as HTMLInputElement;
     const files = target.files;
-    if (files && files.length > 0) {
+    if (files && files.length > 0 && files[0]) {
       this.processFile(files[0]);
     }
   }
