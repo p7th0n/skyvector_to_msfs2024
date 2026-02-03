@@ -100,11 +100,11 @@ This project is configured for automatic deployment to GitHub Pages using GitHub
 
 ## Technology Stack
 
-- **TypeScript** - Type-safe JavaScript with enhanced developer experience
-- **Vite** - Fast build tool and development server
-- **Vitest** - Unit testing framework
-- **ESLint** - Code linting and formatting
-- **GitHub Actions** - Automated CI/CD pipeline
+- **TypeScript** - Type-safe JavaScript with enhanced developer experience.
+- **Vite** - Fast build tool and development server.
+- **Vitest** - Unit testing framework.
+- **ESLint** - Code linting and formatting.
+- **GitHub Actions** - Automated CI/CD pipeline.
 
 ## Contributing
 
