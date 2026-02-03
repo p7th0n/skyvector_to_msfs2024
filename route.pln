@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SimBase.Document Type="AceXML" version="2,0">
+  <Descr>FlightPlan</Descr>
+  <FlightPlan.FlightPlan>
+    <AppVersion>
+      <AppVersionMajor>1</AppVersionMajor>
+      <AppVersionMinor>0</AppVersionMinor>
+    </AppVersion>
+    <Title>P34 to N68</Title>
+    <FPType>VFR</FPType>
+    <RouteType>Direct</RouteType>
+    <CruisingAlt>3500</CruisingAlt>
+    <DepartureID>P34</DepartureID>
+    <DepartureLLA>40.536111,-77.386111,0</DepartureLLA>
+    <DestinationID>N68</DestinationID>
+    <DestinationLLA>40.176111,-77.823056,0</DestinationLLA>
+    <ATCWaypointList>
+      <ATCWaypoint id="P34">
+        <ATCWaypointType>Airport</ATCWaypointType>
+        <ICAO>
+          <ICAOIdent>P34</ICAOIdent>
+        </ICAO>
+      </ATCWaypoint>
+      <ATCWaypoint id="WP2">
+        <ATCWaypointType>User</ATCWaypointType>
+        <WorldPosition>40.536111,-77.386111,0</WorldPosition>
+      </ATCWaypoint>
+      <ATCWaypoint id="WP3">
+        <ATCWaypointType>User</ATCWaypointType>
+        <WorldPosition>40.418611,-77.584722,0</WorldPosition>
+      </ATCWaypoint>
+      <ATCWaypoint id="WP4">
+        <ATCWaypointType>User</ATCWaypointType>
+        <WorldPosition>40.176111,-77.823056,0</WorldPosition>
+      </ATCWaypoint>
+      <ATCWaypoint id="N68">
+        <ATCWaypointType>Airport</ATCWaypointType>
+        <ICAO>
+          <ICAOIdent>N68</ICAOIdent>
+        </ICAO>
+      </ATCWaypoint>
+    </ATCWaypointList>
+  </FlightPlan.FlightPlan>
+</SimBase.Document>
